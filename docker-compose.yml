@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  laravel-app:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: laravel-inertia-app
+    container_name: laravel-inertia-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./laravel-app:/var/www/html
+      - ./docker/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ./docker/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+    networks:
+      - laravelnet
+    ports:
+      - "9000:80"
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+
+  nginx:
+    image: nginx:alpine
+    container_name: laravel-inertia-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./laravel-app:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d/
+    networks:
+      - laravelnet
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    ports:
+      - "9001:80"
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=tasksystem_db
+      - MYSQL_ROOT_PASSWORD=password
+    networks:
+      - laravelnet
+
+networks:
+  laravelnet:
+    driver: bridge
+
+volumes:
+  tasksystem_db:
+    driver: local
